@@ -29,7 +29,7 @@ namespace BinaryFlag.Test
 		}
 
 		[TestMethod]
-		public void Test_UIntConcreteBinaryFlag_Implementation()
+		public void Test_UIntConcreteBinaryFlag_FullFlow()
 		{
 			// UIntConcreteBinaryFlag implementation is used when 2<=length<=32. 
 			// We'll test lowest and highest length from this range
@@ -41,8 +41,10 @@ namespace BinaryFlag.Test
 		}
 
 		[TestMethod]
-		public void Test_ULongConcreteBinaryFlag_Implementation()
+		public void Test_ULongConcreteBinaryFlag_FullFlow()
 		{
+			// UIntConcreteBinaryFlag implementation is used when 33<=length<=64. 
+			// We'll test lowest and highest length from this range
 			var sizes_to_test = new List<ulong>() { 33, 64 };
 			sizes_to_test.ForEach((len) => {
 				TestFullFlow(len, initialValue: true);
@@ -51,13 +53,39 @@ namespace BinaryFlag.Test
 		}
 
 		[TestMethod]
-		public void Test_UIntArrayConcreteBinaryFlag_Implementation()
+		public void Test_UIntArrayConcreteBinaryFlag_FullFlow()
 		{
+			// UIntConcreteBinaryFlag implementation is used when length > 64. 
 			var sizes_to_test = new List<ulong>() { 65, 4096 };
 			sizes_to_test.ForEach((len) => {
 				TestFullFlow(len, initialValue: true);
 				TestFullFlow(len, initialValue: false);
 			});
+		}
+
+
+		[TestMethod]
+		public void Test_UIntConcreteBinaryFlag_ThrowsException_AfterDispose()
+		{
+			ulong length = 32;
+			TestAfterDispose(length, true);
+			TestAfterDispose(length, false);
+		}
+
+		[TestMethod]
+		public void Test_ULongConcreteBinaryFlag_ThrowsException_AfterDispose()
+		{
+			ulong length = 33;
+			TestAfterDispose(length, true);
+			TestAfterDispose(length, false);
+		}
+
+		[TestMethod]
+		public void Test_UIntArrayConcreteBinaryFlag_ThrowsException_AfterDispose()
+		{
+			ulong length = 65;
+			TestAfterDispose(length, true);
+			TestAfterDispose(length, false);
 		}
 
 		/// <summary>
@@ -120,7 +148,21 @@ namespace BinaryFlag.Test
 			Assert.ThrowsException<ArgumentOutOfRangeException>(throws_outOfRange_resetFlag);
 
 			impl.Dispose();
-			impl.Dispose(); // Verify object handles second disposal request without errors
+		}
+
+		private static void TestAfterDispose(ulong length, bool initialValue)
+		{
+			MultipleBinaryFlag impl = new MultipleBinaryFlag(length, initialValue);
+			impl.Dispose();
+			try
+			{
+				impl.GetFlag();
+			} catch(Exception e)
+			{
+				// This is expected.
+				return;
+			}
+			Assert.Fail("Expected exception to be raised when accessing MultipleBinaryFlag after dispose. Got nothing instead");
 		}
 	}
 }
